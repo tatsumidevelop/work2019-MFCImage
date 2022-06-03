@@ -5,23 +5,6 @@
 
 CImageHalfTone::CImageHalfTone()
 {
-	m_ptHalfTone[0].X = 0;   m_ptHalfTone[0].Y = 0;   // 1
-	m_ptHalfTone[1].X = 1;   m_ptHalfTone[1].Y = 0;   // 2
-	m_ptHalfTone[2].X = 1;   m_ptHalfTone[2].Y = 1;   // 3
-	m_ptHalfTone[3].X = 0;   m_ptHalfTone[3].Y = 1;   // 4
-	m_ptHalfTone[4].X = -1;  m_ptHalfTone[4].Y = 0;   // 5
-	m_ptHalfTone[5].X = 2;   m_ptHalfTone[5].Y = 1;   // 6
-	m_ptHalfTone[6].X = 1;   m_ptHalfTone[6].Y = -1;  // 7
-	m_ptHalfTone[7].X = 0;   m_ptHalfTone[7].Y = 2;   // 8
-	m_ptHalfTone[8].X = -1;  m_ptHalfTone[8].Y = 1;   // 9
-	m_ptHalfTone[9].X = 2;   m_ptHalfTone[9].Y = 0;   // 10
-	m_ptHalfTone[10].X = 0;  m_ptHalfTone[10].Y = -1; // 11
-	m_ptHalfTone[11].X = 1;  m_ptHalfTone[11].Y = 2;  // 12
-	m_ptHalfTone[12].X = -1; m_ptHalfTone[12].Y = -1; // 13
-	m_ptHalfTone[13].X = 2;  m_ptHalfTone[13].Y = 2;  // 14
-	m_ptHalfTone[14].X = 2;  m_ptHalfTone[14].Y = -1; // 15
-	m_ptHalfTone[15].X = -1; m_ptHalfTone[15].Y = 2;  // 16
-
 }
 CImageHalfTone::~CImageHalfTone()
 {
@@ -50,9 +33,10 @@ void CImageHalfTone::MainExecute(CView* pcView)
 void CImageHalfTone::MainLoop(Bitmap *pcBitmap)
 {
 	int nSrcXDot, nSrcYDot;
-	int nPicupXDot, nPicupYDot;
+	DBL dXTime, dYTime;
 	int nX, nY;
-	int nSetX, nSetY;
+	int nSrcX, nSrcY;
+	int nTblX, nTblY;
 	Gdiplus::Color clr;
 	DBL dR, dG, dB;
 	DBL dTone;
@@ -61,17 +45,22 @@ void CImageHalfTone::MainLoop(Bitmap *pcBitmap)
 	nSrcXDot = pcBitmap->GetWidth();
 	nSrcYDot = pcBitmap->GetHeight();
 	CreateTwoToneBitmap(nSrcXDot, nSrcYDot);
-	nPicupXDot = nSrcXDot / 4;
-	nPicupYDot = nSrcYDot / 4;
-	for (nX = 0; nX < nPicupXDot; nX++) {
-		nSetX = nX * 4 + 2;
-		for (nY = 0; nY < nPicupYDot; nY++) {
-			nSetY = nY * 4 + 2;
-			pcBitmap->GetPixel(nSetX, nSetY, &clr);
+	dXTime = nSrcXDot / m_nXDot;
+	dYTime = nSrcYDot / m_nYDot;
+
+	for (nX = 0; nX < m_nXDot; nX++) {
+		nSrcX = nX * dXTime;
+		for (nY = 0; nY < m_nYDot; nY++) {
+			nSrcY = nY * dYTime;
+			pcBitmap->GetPixel(nSrcX, nSrcY, &clr);
 			dR = clr.GetR(); dG = clr.GetG(); dB = clr.GetB();
 			dTone = (0.299 * dR + 0.587 * dG + 0.114 * dB) / 255;
-			nTone = dTone * 16;
-			SetTonePattern(nSetX, nSetY, nTone);
+			nTone = dTone * 17;
+			nTblX = nX % 17;
+			nTblY = nY % 17;
+			if (m_tblHalfTone[nTblX][nTblY] < nTone) {
+				OnPixcel(nX, nY);
+			}
 		}
 	}
 }
@@ -84,7 +73,6 @@ void CImageHalfTone::SetTonePattern(int nCenterX, int nCenterY, int nTone)
 	for (idx = 0; idx < max; idx++) {
 		nSetX = nCenterX + m_ptHalfTone[max - idx - 1].X;
 		nSetY = nCenterY + m_ptHalfTone[max - idx - 1].Y;
-		OnPixcel(nSetX, nSetY);
 		if (nTone  < idx) {
 			break;
 		}
@@ -101,7 +89,7 @@ void CImageHalfTone::CreateTwoToneBitmap(int xdot, int ydot)
 	m_nXDot = m_nXByteSize * 8;
 	m_lBitsSize = m_nXByteSize * m_nYDot;
 
-	m_hBits = GlobalAlloc(GHND, m_lBitsSize);
+	m_hBits = GlobalAlloc(GHND, m_lBitsSize + m_nXByteSize);
 	if (m_hBits == 0) {
 		return;
 	}
