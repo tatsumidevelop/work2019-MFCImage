@@ -44,9 +44,9 @@ void CImageHalfTone::MainLoop(Bitmap *pcBitmap)
 
 	nSrcXDot = pcBitmap->GetWidth();
 	nSrcYDot = pcBitmap->GetHeight();
-	CreateTwoToneBitmap(nSrcXDot, nSrcYDot);
-	dXTime = nSrcXDot / m_nXDot;
-	dYTime = nSrcYDot / m_nYDot;
+	CreateTwoToneBitmap(nSrcXDot * 1.5, nSrcYDot * 1.5);
+	dXTime = (DBL)nSrcXDot / (DBL)m_nXDot;
+	dYTime = (DBL)nSrcYDot / (DBL)m_nYDot;
 
 	for (nX = 0; nX < m_nXDot; nX++) {
 		nSrcX = nX * dXTime;
